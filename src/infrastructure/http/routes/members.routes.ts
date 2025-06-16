@@ -1,14 +1,22 @@
 import { Router } from "express";
 import { MembersController } from "../controllers/MembersController";
+import { authenticate, authorize } from "../middlewares/authMiddleware";
 
 const membersRouter = Router();
 const membersController = new MembersController();
 
-// Rutas para miembros
-membersRouter.post("/", membersController.create);
-membersRouter.get("/", membersController.getAll);
+membersRouter.use(authenticate);
+
+membersRouter.get("/", authorize("admin", "staff"), membersController.getAll);
+
 membersRouter.get("/:id", membersController.getById);
-membersRouter.put("/:id", membersController.update);
-membersRouter.delete("/:id", membersController.delete);
+
+membersRouter.post("/", authorize("admin", "staff"), membersController.create);
+membersRouter.put(
+  "/:id",
+  authorize("admin", "staff"),
+  membersController.update
+);
+membersRouter.delete("/:id", authorize("admin"), membersController.delete);
 
 export { membersRouter };

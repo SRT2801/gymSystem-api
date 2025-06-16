@@ -1,12 +1,20 @@
 import { Router } from "express";
 import { SubscriptionsController } from "../controllers/SubscriptionsController";
+import { authenticate, authorize } from "../middlewares/authMiddleware";
 
 const subscriptionsRouter = Router();
 const subscriptionsController = new SubscriptionsController();
 
-// Rutas para suscripciones
+subscriptionsRouter.use(authenticate);
+
+subscriptionsRouter.get(
+  "/",
+  authorize("admin", "staff"),
+  subscriptionsController.getAll
+);
+
 subscriptionsRouter.post("/", subscriptionsController.create);
-subscriptionsRouter.get("/", subscriptionsController.getAll);
+
 subscriptionsRouter.get("/:id", subscriptionsController.getById);
 subscriptionsRouter.get(
   "/member/:memberId",
@@ -16,7 +24,16 @@ subscriptionsRouter.get(
   "/member/:memberId/active",
   subscriptionsController.getActiveMembership
 );
-subscriptionsRouter.put("/:id", subscriptionsController.update);
-subscriptionsRouter.delete("/:id", subscriptionsController.delete);
+
+subscriptionsRouter.put(
+  "/:id",
+  authorize("admin", "staff"),
+  subscriptionsController.update
+);
+subscriptionsRouter.delete(
+  "/:id",
+  authorize("admin"),
+  subscriptionsController.delete
+);
 
 export { subscriptionsRouter };
