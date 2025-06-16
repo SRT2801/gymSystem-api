@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { formatDate } from "../../../shared/utils/dateFormatter";
 import { CreateSubscriptionUseCase } from "../../../application/useCases/subscriptions/CreateSubscriptionUseCase";
 import { MemberRepository } from "../../../infrastructure/repositories/MemberRepository";
 import { MembershipRepository } from "../../../infrastructure/repositories/MembershipRepository";
@@ -7,21 +8,6 @@ import { MembershipSubscriptionRepository } from "../../../infrastructure/reposi
 const memberRepository = new MemberRepository();
 const membershipRepository = new MembershipRepository();
 const subscriptionRepository = new MembershipSubscriptionRepository();
-
-function formatDate(date: Date | string | undefined | null): string | null {
-  if (!date) return null;
-
-  const d = new Date(date);
-
-  // Formato DD/MM/YYYY HH:MM
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
-}
 
 export class SubscriptionsController {
   async create(req: Request, res: Response): Promise<Response> {
@@ -50,7 +36,15 @@ export class SubscriptionsController {
         paymentDate: paymentDate ? new Date(paymentDate) : undefined,
       });
 
-      return res.status(201).json(subscription);
+      // Formatear las fechas antes de devolver la respuesta
+      const formattedSubscription = {
+        ...subscription,
+        startDate: formatDate(subscription.startDate),
+        endDate: formatDate(subscription.endDate),
+        paymentDate: formatDate(subscription.paymentDate),
+      };
+
+      return res.status(201).json(formattedSubscription);
     } catch (error: any) {
       return res.status(400).json({ message: error.message });
     }

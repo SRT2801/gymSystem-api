@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { CreateMemberUseCase } from "@application/useCases/members/CreateMemberUseCase";
 import { GetAllMembersUseCase } from "@application/useCases/members/GetAllMembersUseCase";
 import { MemberRepository } from "@infrastructure/repositories/MemberRepository";
+import { formatDate } from "../../../shared/utils/dateFormatter";
 
 const memberRepository = new MemberRepository();
 
@@ -20,7 +21,14 @@ export class MembersController {
         active: true,
       });
 
-      return res.status(201).json(member);
+      // Formatear las fechas antes de devolver la respuesta
+      const formattedMember = {
+        ...member,
+        birthDate: formatDate(member.birthDate),
+        registrationDate: formatDate(member.registrationDate),
+      };
+
+      return res.status(201).json(formattedMember);
     } catch (error: any) {
       return res.status(400).json({ message: error.message });
     }
@@ -31,7 +39,13 @@ export class MembersController {
       const getAllMembersUseCase = new GetAllMembersUseCase(memberRepository);
       const members = await getAllMembersUseCase.execute();
 
-      return res.status(200).json(members);
+      const formattedMembers = members.map((member) => ({
+        ...member,
+        birthDate: formatDate(member.birthDate),
+        registrationDate: formatDate(member.registrationDate),
+      }));
+
+      return res.status(200).json(formattedMembers);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
@@ -46,7 +60,13 @@ export class MembersController {
         return res.status(404).json({ message: "Miembro no encontrado" });
       }
 
-      return res.status(200).json(member);
+      const formattedMember = {
+        ...member,
+        birthDate: formatDate(member.birthDate),
+        registrationDate: formatDate(member.registrationDate),
+      };
+
+      return res.status(200).json(formattedMember);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
