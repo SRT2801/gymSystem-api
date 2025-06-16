@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { startServer } from "./interfaces/http/server";
+import { startServer } from "@infrastructure/http/server";
 import { connectDB } from "@infrastructure/persistence/database/mongodb/connection";
 import { seedMembershipsIfEmpty } from "./infrastructure/database/seeds/membershipSeeder";
 
