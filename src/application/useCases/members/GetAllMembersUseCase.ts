@@ -4,7 +4,11 @@ import { IMemberRepository } from "@domain/repositories/IMemberRepository";
 export class GetAllMembersUseCase {
   constructor(private memberRepository: IMemberRepository) {}
 
-  async execute(): Promise<Member[]> {
-    return this.memberRepository.findAll();
+  async execute(): Promise<{ members: Member[]; isEmpty: boolean }> {
+    const members = await this.memberRepository.findAll();
+    return {
+      members,
+      isEmpty: members.length === 0,
+    };
   }
 }
