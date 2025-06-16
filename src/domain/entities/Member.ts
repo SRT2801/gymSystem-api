@@ -7,4 +7,7 @@ export interface Member {
   birthDate: Date;
   registrationDate: Date;
   active: boolean;
+  password?: string;
+  hasAccount?: boolean;
+
 }

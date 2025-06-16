@@ -1,8 +1,8 @@
-export interface User {
+export interface Admin {
   id?: string;
   name: string;
   email: string;
   password: string;
-  role: "admin" | "staff" | "member";
+  role: "admin" | "staff";
   active: boolean;
 }
