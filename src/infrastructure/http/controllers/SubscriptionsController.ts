@@ -23,11 +23,9 @@ export class SubscriptionsController {
 
       // Si es un miembro, solo puede crear suscripciones para sí mismo
       if (req.user?.role === "member" && req.user.id !== memberId) {
-        return res
-          .status(403)
-          .json({
-            message: "Solo puedes adquirir membresías para tu propia cuenta",
-          });
+        return res.status(403).json({
+          message: "Solo puedes adquirir membresías para tu propia cuenta",
+        });
       }
 
       const createSubscriptionUseCase = new CreateSubscriptionUseCase(
@@ -63,7 +61,7 @@ export class SubscriptionsController {
     try {
       const subscriptions = await subscriptionRepository.findAll();
 
-      const formattedSubscriptions = subscriptions.map(subscription => ({
+      const formattedSubscriptions = subscriptions.map((subscription) => ({
         id: subscription.id,
         memberId: subscription.memberId,
         membershipId: subscription.membershipId,
@@ -135,7 +133,7 @@ export class SubscriptionsController {
         memberId
       );
 
-      const formattedSubscriptions = subscriptions.map(subscription => ({
+      const formattedSubscriptions = subscriptions.map((subscription) => ({
         id: subscription.id,
         memberId: subscription.memberId,
         membershipId: subscription.membershipId,
@@ -191,8 +189,8 @@ export class SubscriptionsController {
       return res.status(200).json(formattedSubscription);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
+    }
   }
-}
   async update(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
