@@ -9,6 +9,9 @@ const MemberSchema = new Schema(
     birthDate: { type: Date, required: true },
     registrationDate: { type: Date, default: Date.now },
     active: { type: Boolean, default: true },
+
+    password: { type: String },
+    hasAccount: { type: Boolean, default: false },
   },
   {
     timestamps: true,
