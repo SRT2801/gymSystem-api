@@ -7,7 +7,6 @@ export class CreateMemberUseCase {
   async execute(
     memberData: Omit<Member, "id" | "registrationDate">
   ): Promise<Member> {
-    // Validar que el correo no exista
     const existingMember = await this.memberRepository.findByEmail(
       memberData.email
     );
