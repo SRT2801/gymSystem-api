@@ -7,10 +7,11 @@ const UserSchema = new Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["admin", "staff"],
-      default: "staff",
+      enum: ["admin", "staff", "member"],
+      default: "member",
     },
     active: { type: Boolean, default: true },
+    memberId: { type: Schema.Types.ObjectId, ref: "Member" },
   },
   {
     timestamps: true,
