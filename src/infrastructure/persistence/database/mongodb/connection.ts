@@ -2,9 +2,8 @@ import mongoose from "mongoose";
 
 export async function connectDB(): Promise<void> {
   try {
-  
-    mongoose.set('strictQuery', false);
-    
+    mongoose.set("strictQuery", false);
+
     const mongoUri =
       process.env.MONGODB_URI || "mongodb://localhost:27017/gymSystem";
     await mongoose.connect(mongoUri);
