@@ -3,41 +3,65 @@ import { CreateMemberUseCase } from "@application/useCases/members/CreateMemberU
 import { GetAllMembersUseCase } from "@application/useCases/members/GetAllMembersUseCase";
 import { MemberRepository } from "@infrastructure/repositories/MemberRepository";
 import { formatDate } from "@infrastructure/common/utils/dateFormatter";
+import { asyncHandler } from "../middlewares/errorHandler";
+import {
+  ValidationError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+} from "@infrastructure/common/errors/AppError";
 
 const memberRepository = new MemberRepository();
 
 export class MembersController {
-  async create(req: Request, res: Response): Promise<Response> {
-    try {
+  create = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
       const { name, email, phone, documentId, birthDate } = req.body;
 
+      if (!name || !email || !phone || !documentId || !birthDate) {
+        throw new ValidationError("Todos los campos son requeridos");
+      }
+
       const createMemberUseCase = new CreateMemberUseCase(memberRepository);
-      const member = await createMemberUseCase.execute({
-        name,
-        email,
-        phone,
-        documentId,
-        birthDate: new Date(birthDate),
-        active: true,
-      });
 
-      // Formatear las fechas antes de devolver la respuesta
-      const formattedMember = {
-        ...member,
-        birthDate: formatDate(member.birthDate),
-        registrationDate: formatDate(member.registrationDate),
-      };
+      try {
+        const member = await createMemberUseCase.execute({
+          name,
+          email,
+          phone,
+          documentId,
+          birthDate: new Date(birthDate),
+          active: true,
+        });
 
-      return res.status(201).json(formattedMember);
-    } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+        // Formatear las fechas antes de devolver la respuesta
+        const formattedMember = {
+          ...member,
+          birthDate: formatDate(member.birthDate),
+          registrationDate: formatDate(member.registrationDate),
+        };
+
+        return res.status(201).json(formattedMember);
+      } catch (error: any) {
+        if (error.message.includes("Ya existe un miembro")) {
+          throw new ConflictError(error.message);
+        }
+        throw error;
+      }
     }
-  }
+  );
 
-  async getAll(req: Request, res: Response): Promise<Response> {
-    try {
+  getAll = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
       const getAllMembersUseCase = new GetAllMembersUseCase(memberRepository);
-      const members = await getAllMembersUseCase.execute();
+      const { members, isEmpty } = await getAllMembersUseCase.execute();
+
+      if (isEmpty) {
+        return res.status(200).json({
+          message: "No hay miembros registrados actualmente",
+          data: [],
+        });
+      }
 
       const formattedMembers = members.map((member) => ({
         ...member,
@@ -45,19 +69,28 @@ export class MembersController {
         registrationDate: formatDate(member.registrationDate),
       }));
 
-      return res.status(200).json(formattedMembers);
-    } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return res.status(200).json({
+        message: `Se encontraron ${members.length} miembros`,
+        data: formattedMembers,
+      });
     }
-  }
+  );
 
-  async getById(req: Request, res: Response): Promise<Response> {
-    try {
+  getById = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
       const { id } = req.params;
+
+      // Si es un miembro, solo puede ver sus propios datos
+      if (req.user?.role === "member" && req.user.id !== id) {
+        throw new ForbiddenError(
+          "No tienes permiso para acceder a estos datos"
+        );
+      }
+
       const member = await memberRepository.findById(id);
 
       if (!member) {
-        return res.status(404).json({ message: "Miembro no encontrado" });
+        throw new NotFoundError("Miembro no encontrado");
       }
 
       const formattedMember = {
@@ -67,40 +100,34 @@ export class MembersController {
       };
 
       return res.status(200).json(formattedMember);
-    } catch (error: any) {
-      return res.status(500).json({ message: error.message });
     }
-  }
+  );
 
-  async update(req: Request, res: Response): Promise<Response> {
-    try {
+  update = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
       const { id } = req.params;
       const updateData = req.body;
 
       const member = await memberRepository.update(id, updateData);
 
       if (!member) {
-        return res.status(404).json({ message: "Miembro no encontrado" });
+        throw new NotFoundError("Miembro no encontrado");
       }
 
       return res.status(200).json(member);
-    } catch (error: any) {
-      return res.status(400).json({ message: error.message });
     }
-  }
+  );
 
-  async delete(req: Request, res: Response): Promise<Response> {
-    try {
+  delete = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
       const { id } = req.params;
       const deleted = await memberRepository.delete(id);
 
       if (!deleted) {
-        return res.status(404).json({ message: "Miembro no encontrado" });
+        throw new NotFoundError("Miembro no encontrado");
       }
 
       return res.status(204).send();
-    } catch (error: any) {
-      return res.status(500).json({ message: error.message });
     }
-  }
+  );
 }

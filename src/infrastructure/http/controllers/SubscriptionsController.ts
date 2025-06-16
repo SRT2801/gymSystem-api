@@ -21,6 +21,15 @@ export class SubscriptionsController {
         paymentDate,
       } = req.body;
 
+      // Si es un miembro, solo puede crear suscripciones para sí mismo
+      if (req.user?.role === "member" && req.user.id !== memberId) {
+        return res
+          .status(403)
+          .json({
+            message: "Solo puedes adquirir membresías para tu propia cuenta",
+          });
+      }
+
       const createSubscriptionUseCase = new CreateSubscriptionUseCase(
         subscriptionRepository,
         memberRepository,
@@ -92,6 +101,16 @@ export class SubscriptionsController {
         return res.status(404).json({ message: "Suscripción no encontrada" });
       }
 
+      // Si es un miembro, solo puede ver sus propias suscripciones
+      if (
+        req.user?.role === "member" &&
+        req.user.id !== subscription.memberId
+      ) {
+        return res.status(403).json({
+          message: "No tienes permiso para ver esta suscripción",
+        });
+      }
+
       const membership = await membershipRepository.findById(
         subscription.membershipId
       );
@@ -120,6 +139,14 @@ export class SubscriptionsController {
   async getByMemberId(req: Request, res: Response): Promise<Response> {
     try {
       const { memberId } = req.params;
+
+      // Si es un miembro, solo puede ver sus propias suscripciones
+      if (req.user?.role === "member" && req.user.id !== memberId) {
+        return res.status(403).json({
+          message: "Solo puedes ver tus propias suscripciones",
+        });
+      }
+
       const subscriptions = await subscriptionRepository.findByMemberId(
         memberId
       );
@@ -156,6 +183,14 @@ export class SubscriptionsController {
   async getActiveMembership(req: Request, res: Response): Promise<Response> {
     try {
       const { memberId } = req.params;
+
+      // Si es un miembro, solo puede ver su propia suscripción activa
+      if (req.user?.role === "member" && req.user.id !== memberId) {
+        return res.status(403).json({
+          message: "Solo puedes ver tu propia suscripción activa",
+        });
+      }
+
       const subscription = await subscriptionRepository.findActiveByMemberId(
         memberId
       );
