@@ -4,7 +4,7 @@ import { MemberModel } from "@infrastructure/persistence/database/mongodb/models
 
 export class MemberRepository implements IMemberRepository {
   async findAll(): Promise<Member[]> {
-    const members = await MemberModel.find();
+    const members = await MemberModel.find().select("-password");
     return members.map((member) => ({
       id: member._id.toString(),
       name: member.name,
@@ -14,11 +14,12 @@ export class MemberRepository implements IMemberRepository {
       birthDate: member.birthDate,
       registrationDate: member.registrationDate,
       active: member.active,
+      hasAccount: member.hasAccount,
     }));
   }
 
   async findById(id: string): Promise<Member | null> {
-    const member = await MemberModel.findById(id);
+    const member = await MemberModel.findById(id).select("-password");
     if (!member) return null;
 
     return {
@@ -46,6 +47,7 @@ export class MemberRepository implements IMemberRepository {
       birthDate: member.birthDate,
       registrationDate: member.registrationDate,
       active: member.active,
+      password: member.password,
     };
   }
 
@@ -70,7 +72,7 @@ export class MemberRepository implements IMemberRepository {
   ): Promise<Member | null> {
     const member = await MemberModel.findByIdAndUpdate(id, memberData, {
       new: true,
-    });
+    }).select("-password");
 
     if (!member) return null;
 
