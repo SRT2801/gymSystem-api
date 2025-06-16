@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { CreateMemberUseCase } from "@application/useCases/members/CreateMemberUseCase";
 import { GetAllMembersUseCase } from "@application/useCases/members/GetAllMembersUseCase";
 import { MemberRepository } from "@infrastructure/repositories/MemberRepository";
-import { formatDate } from "../../../shared/utils/dateFormatter";
+import { formatDate } from "@infrastructure/common/utils/dateFormatter";
 
 const memberRepository = new MemberRepository();
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { formatDate } from "../../../shared/utils/dateFormatter";
+import { formatDate } from "@infrastructure/common/utils/dateFormatter";
 import { CreateSubscriptionUseCase } from "../../../application/useCases/subscriptions/CreateSubscriptionUseCase";
 import { MemberRepository } from "../../../infrastructure/repositories/MemberRepository";
 import { MembershipRepository } from "../../../infrastructure/repositories/MembershipRepository";
