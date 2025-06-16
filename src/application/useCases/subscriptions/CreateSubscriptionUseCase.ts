@@ -47,6 +47,7 @@ export class CreateSubscriptionUseCase {
     const subscription: MembershipSubscription = {
       memberId: data.memberId,
       membershipId: data.membershipId,
+      membershipName: membership.name,
       startDate,
       endDate,
       paymentStatus: data.paymentStatus,

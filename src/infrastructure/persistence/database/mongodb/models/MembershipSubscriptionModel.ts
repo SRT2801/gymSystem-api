@@ -8,6 +8,7 @@ const MembershipSubscriptionSchema = new Schema(
       required: true,
       ref: "Membership",
     },
+    membershipName: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     paymentStatus: {

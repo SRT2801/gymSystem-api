@@ -63,30 +63,20 @@ export class SubscriptionsController {
     try {
       const subscriptions = await subscriptionRepository.findAll();
 
-      const enrichedSubscriptions = await Promise.all(
-        subscriptions.map(async (subscription) => {
-          const membership = await membershipRepository.findById(
-            subscription.membershipId
-          );
+      const formattedSubscriptions = subscriptions.map(subscription => ({
+        id: subscription.id,
+        memberId: subscription.memberId,
+        membershipId: subscription.membershipId,
+        membershipName: subscription.membershipName,
+        startDate: formatDate(subscription.startDate),
+        endDate: formatDate(subscription.endDate),
+        paymentStatus: subscription.paymentStatus,
+        paymentAmount: subscription.paymentAmount,
+        paymentDate: formatDate(subscription.paymentDate),
+        active: subscription.active,
+      }));
 
-          return {
-            id: subscription.id,
-            memberId: subscription.memberId,
-            membershipId: subscription.membershipId,
-            membershipName: membership
-              ? membership.name
-              : "Membresía no encontrada",
-            startDate: formatDate(subscription.startDate),
-            endDate: formatDate(subscription.endDate),
-            paymentStatus: subscription.paymentStatus,
-            paymentAmount: subscription.paymentAmount,
-            paymentDate: formatDate(subscription.paymentDate),
-            active: subscription.active,
-          };
-        })
-      );
-
-      return res.status(200).json(enrichedSubscriptions);
+      return res.status(200).json(formattedSubscriptions);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
@@ -111,17 +101,11 @@ export class SubscriptionsController {
         });
       }
 
-      const membership = await membershipRepository.findById(
-        subscription.membershipId
-      );
-
-      const enrichedSubscription = {
+      const formattedSubscription = {
         id: subscription.id,
         memberId: subscription.memberId,
         membershipId: subscription.membershipId,
-        membershipName: membership
-          ? membership.name
-          : "Membresía no encontrada",
+        membershipName: subscription.membershipName,
         startDate: formatDate(subscription.startDate),
         endDate: formatDate(subscription.endDate),
         paymentStatus: subscription.paymentStatus,
@@ -130,7 +114,7 @@ export class SubscriptionsController {
         active: subscription.active,
       };
 
-      return res.status(200).json(enrichedSubscription);
+      return res.status(200).json(formattedSubscription);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
@@ -151,30 +135,20 @@ export class SubscriptionsController {
         memberId
       );
 
-      const enrichedSubscriptions = await Promise.all(
-        subscriptions.map(async (subscription) => {
-          const membership = await membershipRepository.findById(
-            subscription.membershipId
-          );
+      const formattedSubscriptions = subscriptions.map(subscription => ({
+        id: subscription.id,
+        memberId: subscription.memberId,
+        membershipId: subscription.membershipId,
+        membershipName: subscription.membershipName,
+        startDate: formatDate(subscription.startDate),
+        endDate: formatDate(subscription.endDate),
+        paymentStatus: subscription.paymentStatus,
+        paymentAmount: subscription.paymentAmount,
+        paymentDate: formatDate(subscription.paymentDate),
+        active: subscription.active,
+      }));
 
-          return {
-            id: subscription.id,
-            memberId: subscription.memberId,
-            membershipId: subscription.membershipId,
-            membershipName: membership
-              ? membership.name
-              : "Membresía no encontrada",
-            startDate: formatDate(subscription.startDate),
-            endDate: formatDate(subscription.endDate),
-            paymentStatus: subscription.paymentStatus,
-            paymentAmount: subscription.paymentAmount,
-            paymentDate: formatDate(subscription.paymentDate),
-            active: subscription.active,
-          };
-        })
-      );
-
-      return res.status(200).json(enrichedSubscriptions);
+      return res.status(200).json(formattedSubscriptions);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
@@ -201,17 +175,11 @@ export class SubscriptionsController {
         });
       }
 
-      const membership = await membershipRepository.findById(
-        subscription.membershipId
-      );
-
-      const enrichedSubscription = {
+      const formattedSubscription = {
         id: subscription.id,
         memberId: subscription.memberId,
         membershipId: subscription.membershipId,
-        membershipName: membership
-          ? membership.name
-          : "Membresía no encontrada",
+        membershipName: subscription.membershipName,
         startDate: formatDate(subscription.startDate),
         endDate: formatDate(subscription.endDate),
         paymentStatus: subscription.paymentStatus,
@@ -220,12 +188,11 @@ export class SubscriptionsController {
         active: subscription.active,
       };
 
-      return res.status(200).json(enrichedSubscription);
+      return res.status(200).json(formattedSubscription);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
-    }
   }
-
+}
   async update(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
