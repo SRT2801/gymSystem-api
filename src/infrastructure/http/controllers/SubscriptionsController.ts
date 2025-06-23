@@ -122,7 +122,6 @@ export class SubscriptionsController {
         return res.status(404).json({ message: "Suscripción no encontrada" });
       }
 
-      // Si es un miembro, solo puede ver sus propias suscripciones
       if (
         req.user?.role === "member" &&
         req.user.id !== subscription.memberId
@@ -155,7 +154,6 @@ export class SubscriptionsController {
     try {
       const { memberId } = req.params;
 
-      // Si es un miembro, solo puede ver sus propias suscripciones
       if (req.user?.role === "member" && req.user.id !== memberId) {
         return res.status(403).json({
           message: "Solo puedes ver tus propias suscripciones",
@@ -189,7 +187,6 @@ export class SubscriptionsController {
     try {
       const { memberId } = req.params;
 
-      // Si es un miembro, solo puede ver su propia suscripción activa
       if (req.user?.role === "member" && req.user.id !== memberId) {
         return res.status(403).json({
           message: "Solo puedes ver tu propia suscripción activa",
