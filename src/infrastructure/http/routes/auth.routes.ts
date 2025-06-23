@@ -11,6 +11,7 @@ const authController = new AuthController();
 
 // Rutas públicas
 authRouter.post("/login", authController.login);
+authRouter.post("/logout", authController.logout);
 
 // Ruta única para registro que usa autenticación opcional
 authRouter.post("/register", optionalAuth, authController.register);
@@ -25,6 +26,3 @@ authRouter.post(
   authorize("admin"),
   authController.registerAdmin
 );
-
-// Ruta protegida
-authRouter.get("/me", authenticate, authController.me);
