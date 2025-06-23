@@ -61,10 +61,13 @@ export class SubscriptionsController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      
-      const getAllSubscriptionsUseCase = new GetAllSubscriptionsUseCase(subscriptionRepository);
-      const { subscriptions, isEmpty } = await getAllSubscriptionsUseCase.execute({ page, limit });
-      
+
+      const getAllSubscriptionsUseCase = new GetAllSubscriptionsUseCase(
+        subscriptionRepository
+      );
+      const { subscriptions, isEmpty } =
+        await getAllSubscriptionsUseCase.execute({ page, limit });
+
       if (isEmpty) {
         return res.status(200).json({
           message: "No hay suscripciones registradas actualmente",
@@ -75,8 +78,8 @@ export class SubscriptionsController {
             limit,
             totalPages: 0,
             hasNextPage: false,
-            hasPrevPage: false
-          }
+            hasPrevPage: false,
+          },
         });
       }
 
@@ -102,8 +105,8 @@ export class SubscriptionsController {
           limit: subscriptions.limit,
           totalPages: subscriptions.totalPages,
           hasNextPage: subscriptions.hasNextPage,
-          hasPrevPage: subscriptions.hasPrevPage
-        }
+          hasPrevPage: subscriptions.hasPrevPage,
+        },
       });
     } catch (error: any) {
       return res.status(500).json({ message: error.message });

@@ -1,21 +1,26 @@
 import { MembershipSubscription } from "@domain/entities/MembershipSubscription";
 import { IMembershipSubscriptionRepository } from "@domain/repositories/IMembershipSubscriptionRepository";
-import { PaginationOptions, PaginationResult } from "@domain/repositories/IMemberRepository";
+import {
+  PaginationOptions,
+  PaginationResult,
+} from "@domain/repositories/IMemberRepository";
 import { MembershipSubscriptionModel } from "@infrastructure/persistence/database/mongodb/models/MembershipSubscriptionModel";
 
 export class MembershipSubscriptionRepository
   implements IMembershipSubscriptionRepository
 {
-  async findAll(options?: PaginationOptions): Promise<PaginationResult<MembershipSubscription>> {
+  async findAll(
+    options?: PaginationOptions
+  ): Promise<PaginationResult<MembershipSubscription>> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
     const skip = (page - 1) * limit;
 
     const [subscriptions, total] = await Promise.all([
       MembershipSubscriptionModel.find().skip(skip).limit(limit),
-      MembershipSubscriptionModel.countDocuments()
+      MembershipSubscriptionModel.countDocuments(),
     ]);
-    
+
     const totalPages = Math.ceil(total / limit);
 
     return {
@@ -36,7 +41,7 @@ export class MembershipSubscriptionRepository
       limit,
       totalPages,
       hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      hasPrevPage: page > 1,
     };
   }
 
