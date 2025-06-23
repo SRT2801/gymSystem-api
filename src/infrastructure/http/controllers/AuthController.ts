@@ -24,20 +24,43 @@ export class AuthController {
         throw new ValidationError("Email y contraseña son requeridos");
       }
 
-
       const result = await authService.validateCredentials(email, password);
 
       if (!result) {
         throw new UnauthorizedError("Credenciales inválidas");
       }
 
-      const { user, role } = result;
+      const { user, role } = result; // Generar token
+      const token = authService.generateToken(user, role); // Calcular maxAge basado en JWT_EXPIRES_IN
+      const expiresIn = process.env.JWT_EXPIRES_IN || "30d";
+      // Convertir la expresión de tiempo (por ejemplo, "30d") a milisegundos
+      const maxAge = (() => {
+        const unit = expiresIn.charAt(expiresIn.length - 1);
+        const value = parseInt(expiresIn.slice(0, -1));
 
-      // Generar token
-      const token = authService.generateToken(user, role);
+        switch (unit) {
+          case "d":
+            return value * 24 * 60 * 60 * 1000; // días
+          case "h":
+            return value * 60 * 60 * 1000; // horas
+          case "m":
+            return value * 60 * 1000; // minutos
+          case "s":
+            return value * 1000; // segundos
+          default:
+            return 30 * 24 * 60 * 60 * 1000; // por defecto 30 días
+        }
+      })();
+
+      // Establecer el token como cookie HTTP-only
+      res.cookie("authToken", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Solo HTTPS en producción
+        maxAge: maxAge,
+        sameSite: "strict",
+      });
 
       return res.status(200).json({
-        token,
         user: {
           id: user.id,
           name: user.name,
@@ -60,9 +83,7 @@ export class AuthController {
         birthDate,
       } = req.body;
 
-      
       if (role === "admin" || role === "staff") {
-    
         if (!req.user || req.user.role !== "admin") {
           throw new ForbiddenError(
             "No tienes permisos para crear usuarios con ese rol"
@@ -93,7 +114,6 @@ export class AuthController {
           },
         });
       } else {
-   
         if (
           !name ||
           !email ||
@@ -178,7 +198,6 @@ export class AuthController {
 
     let userData = null;
 
- 
     if (req.user.role === "admin" || req.user.role === "staff") {
       userData = await adminRepository.findById(req.user.id);
     } else if (req.user.role === "member") {
@@ -198,4 +217,19 @@ export class AuthController {
       },
     });
   });
+
+  logout = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
+      res.cookie("authToken", "", {
+        httpOnly: true,
+        expires: new Date(0),
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      return res.status(200).json({
+        message: "Sesión cerrada exitosamente",
+      });
+    }
+  );
 }

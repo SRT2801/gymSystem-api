@@ -86,10 +86,9 @@ export class AuthService {
       name: user.name,
       role: role,
     };
-
     const token = jwt.sign(tokenPayload, secret, {
-      expiresIn: "24h",
-    });
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    } as jwt.SignOptions);
 
     return token;
   }

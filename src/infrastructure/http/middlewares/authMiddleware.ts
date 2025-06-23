@@ -27,15 +27,22 @@ declare global {
 
 export const authenticate = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
+    // Intentar obtener token de cookies primero
+    let token = req.cookies.authToken;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedError(
-        "Acceso no autorizado: Token no proporcionado"
-      );
+    // Si no hay token en cookies, verificar el header de autorización
+    if (!token) {
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        throw new UnauthorizedError(
+          "Acceso no autorizado: Token no proporcionado"
+        );
+      }
+
+      token = authHeader.split(" ")[1];
     }
 
-    const token = authHeader.split(" ")[1];
     const decodedToken = authService.verifyToken(token);
 
     if (!decodedToken) {
@@ -68,12 +75,18 @@ export const authorize = (...allowedRoles: string[]) => {
 export const optionalAuth = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return next();
+      // Intentar obtener token de cookies primero
+      let token = req.cookies.authToken;
+
+      // Si no hay token en cookies, verificar el header de autorización
+      if (!token) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          return next();
+        }
+        token = authHeader.split(" ")[1];
       }
 
-      const token = authHeader.split(" ")[1];
       const decodedToken = authService.verifyToken(token);
 
       if (decodedToken) {
