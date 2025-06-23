@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "@infrastructure/common/utils/dateFormatter";
 import { CreateSubscriptionUseCase } from "../../../application/useCases/subscriptions/CreateSubscriptionUseCase";
+import { GetAllSubscriptionsUseCase } from "../../../application/useCases/subscriptions/GetAllSubscriptionsUseCase";
 import { MemberRepository } from "../../../infrastructure/repositories/MemberRepository";
 import { MembershipRepository } from "../../../infrastructure/repositories/MembershipRepository";
 import { MembershipSubscriptionRepository } from "../../../infrastructure/repositories/MembershipSubscriptionRepository";
@@ -56,12 +57,30 @@ export class SubscriptionsController {
       return res.status(400).json({ message: error.message });
     }
   }
-
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      const subscriptions = await subscriptionRepository.findAll();
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const getAllSubscriptionsUseCase = new GetAllSubscriptionsUseCase(subscriptionRepository);
+      const { subscriptions, isEmpty } = await getAllSubscriptionsUseCase.execute({ page, limit });
+      
+      if (isEmpty) {
+        return res.status(200).json({
+          message: "No hay suscripciones registradas actualmente",
+          data: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false
+          }
+        });
+      }
 
-      const formattedSubscriptions = subscriptions.map((subscription) => ({
+      const formattedSubscriptions = subscriptions.data.map((subscription) => ({
         id: subscription.id,
         memberId: subscription.memberId,
         membershipId: subscription.membershipId,
@@ -74,7 +93,18 @@ export class SubscriptionsController {
         active: subscription.active,
       }));
 
-      return res.status(200).json(formattedSubscriptions);
+      return res.status(200).json({
+        message: `Se encontraron ${subscriptions.total} suscripciones`,
+        data: formattedSubscriptions,
+        pagination: {
+          total: subscriptions.total,
+          page: subscriptions.page,
+          limit: subscriptions.limit,
+          totalPages: subscriptions.totalPages,
+          hasNextPage: subscriptions.hasNextPage,
+          hasPrevPage: subscriptions.hasPrevPage
+        }
+      });
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }

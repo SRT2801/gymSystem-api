@@ -1,24 +1,43 @@
 import { MembershipSubscription } from "@domain/entities/MembershipSubscription";
 import { IMembershipSubscriptionRepository } from "@domain/repositories/IMembershipSubscriptionRepository";
+import { PaginationOptions, PaginationResult } from "@domain/repositories/IMemberRepository";
 import { MembershipSubscriptionModel } from "@infrastructure/persistence/database/mongodb/models/MembershipSubscriptionModel";
 
 export class MembershipSubscriptionRepository
   implements IMembershipSubscriptionRepository
 {
-  async findAll(): Promise<MembershipSubscription[]> {
-    const subscriptions = await MembershipSubscriptionModel.find();
-    return subscriptions.map((sub) => ({
-      id: sub._id.toString(),
-      memberId: sub.memberId.toString(),
-      membershipId: sub.membershipId.toString(),
-      membershipName: sub.membershipName,
-      startDate: sub.startDate,
-      endDate: sub.endDate,
-      paymentStatus: sub.paymentStatus,
-      paymentAmount: sub.paymentAmount,
-      paymentDate: sub.paymentDate,
-      active: sub.active,
-    }));
+  async findAll(options?: PaginationOptions): Promise<PaginationResult<MembershipSubscription>> {
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [subscriptions, total] = await Promise.all([
+      MembershipSubscriptionModel.find().skip(skip).limit(limit),
+      MembershipSubscriptionModel.countDocuments()
+    ]);
+    
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: subscriptions.map((sub) => ({
+        id: sub._id.toString(),
+        memberId: sub.memberId.toString(),
+        membershipId: sub.membershipId.toString(),
+        membershipName: sub.membershipName,
+        startDate: sub.startDate,
+        endDate: sub.endDate,
+        paymentStatus: sub.paymentStatus,
+        paymentAmount: sub.paymentAmount,
+        paymentDate: sub.paymentDate,
+        active: sub.active,
+      })),
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    };
   }
 
   async findById(id: string): Promise<MembershipSubscription | null> {

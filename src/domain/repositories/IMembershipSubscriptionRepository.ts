@@ -1,7 +1,10 @@
 import { MembershipSubscription } from "../entities/MembershipSubscription";
+import { PaginationOptions, PaginationResult } from "./IMemberRepository";
 
 export interface IMembershipSubscriptionRepository {
-  findAll(): Promise<MembershipSubscription[]>;
+  findAll(
+    options?: PaginationOptions
+  ): Promise<PaginationResult<MembershipSubscription>>;
   findById(id: string): Promise<MembershipSubscription | null>;
   findByMemberId(memberId: string): Promise<MembershipSubscription[]>;
   findActiveByMemberId(

@@ -1,21 +1,45 @@
 import { Member } from "@domain/entities/Member";
-import { IMemberRepository } from "@domain/repositories/IMemberRepository";
+import {
+  IMemberRepository,
+  PaginationOptions,
+  PaginationResult,
+} from "@domain/repositories/IMemberRepository";
 import { MemberModel } from "@infrastructure/persistence/database/mongodb/models/MemberModel";
 
 export class MemberRepository implements IMemberRepository {
-  async findAll(): Promise<Member[]> {
-    const members = await MemberModel.find().select("-password");
-    return members.map((member) => ({
-      id: member._id.toString(),
-      name: member.name,
-      email: member.email,
-      phone: member.phone,
-      documentId: member.documentId,
-      birthDate: member.birthDate,
-      registrationDate: member.registrationDate,
-      active: member.active,
-      hasAccount: member.hasAccount,
-    }));
+  async findAll(
+    options?: PaginationOptions
+  ): Promise<PaginationResult<Member>> {
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [members, total] = await Promise.all([
+      MemberModel.find().select("-password").skip(skip).limit(limit),
+      MemberModel.countDocuments(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: members.map((member) => ({
+        id: member._id.toString(),
+        name: member.name,
+        email: member.email,
+        phone: member.phone,
+        documentId: member.documentId,
+        birthDate: member.birthDate,
+        registrationDate: member.registrationDate,
+        active: member.active,
+        hasAccount: member.hasAccount,
+      })),
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   }
 
   async findById(id: string): Promise<Member | null> {

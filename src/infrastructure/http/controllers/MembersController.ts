@@ -50,28 +50,49 @@ export class MembersController {
       }
     }
   );
-
   getAll = asyncHandler(
     async (req: Request, res: Response): Promise<Response> => {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
       const getAllMembersUseCase = new GetAllMembersUseCase(memberRepository);
-      const { members, isEmpty } = await getAllMembersUseCase.execute();
+      const { members, isEmpty } = await getAllMembersUseCase.execute({
+        page,
+        limit,
+      });
 
       if (isEmpty) {
         return res.status(200).json({
           message: "No hay miembros registrados actualmente",
           data: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
         });
       }
 
-      const formattedMembers = members.map((member) => ({
+      const formattedMembers = members.data.map((member) => ({
         ...member,
         birthDate: formatDate(member.birthDate),
         registrationDate: formatDate(member.registrationDate),
       }));
 
       return res.status(200).json({
-        message: `Se encontraron ${members.length} miembros`,
+        message: `Se encontraron ${members.total} miembros`,
         data: formattedMembers,
+        pagination: {
+          total: members.total,
+          page: members.page,
+          limit: members.limit,
+          totalPages: members.totalPages,
+          hasNextPage: members.hasNextPage,
+          hasPrevPage: members.hasPrevPage,
+        },
       });
     }
   );
