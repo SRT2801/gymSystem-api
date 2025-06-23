@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { membersRouter } from "./routes/members.routes";
 import { membershipsRouter } from "./routes/memberships.routes";
 import { subscriptionsRouter } from "./routes/subscriptions.routes";
@@ -10,8 +11,14 @@ export async function startServer(): Promise<Application> {
   const app: Application = express();
   const port = process.env.PORT || 3000;
 
-  app.use(cors());
+  app.use(
+    cors({
+      origin: process.env.FRONTEND_URL,
+      credentials: true,
+    })
+  );
   app.use(express.json());
+  app.use(cookieParser());
 
   // Rutas
   app.use("/api/auth", authRouter);
@@ -23,7 +30,6 @@ export async function startServer(): Promise<Application> {
     res.status(200).send("OK");
   });
 
-
   app.use((req, res) => {
     res.status(404).json({
       status: "error",
@@ -31,7 +37,6 @@ export async function startServer(): Promise<Application> {
     });
   });
 
-  
   app.use(errorHandler);
 
   app.listen(port);
