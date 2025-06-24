@@ -14,9 +14,15 @@ export class MemberRepository implements IMemberRepository {
     const limit = options?.limit || 10;
     const skip = (page - 1) * limit;
 
+    // Construir filtro basado en las opciones
+    const filter: any = {};
+    if (options?.filter?.active !== undefined) {
+      filter.active = options.filter.active;
+    }
+
     const [members, total] = await Promise.all([
-      MemberModel.find().select("-password").skip(skip).limit(limit),
-      MemberModel.countDocuments(),
+      MemberModel.find(filter).select("-password").skip(skip).limit(limit),
+      MemberModel.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(total / limit);

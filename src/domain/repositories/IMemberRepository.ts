@@ -1,8 +1,13 @@
 import { Member } from "../entities/Member";
 
+export interface MemberFilter {
+  active?: boolean;
+}
+
 export interface PaginationOptions {
   page?: number;
   limit?: number;
+  filter?: MemberFilter;
 }
 
 export interface PaginationResult<T> {

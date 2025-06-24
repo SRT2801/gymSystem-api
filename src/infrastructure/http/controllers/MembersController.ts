@@ -55,10 +55,18 @@ export class MembersController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
+      // Manejar filtrado por estado (activo/inactivo)
+      let active: boolean | undefined = undefined;
+      if (req.query.active !== undefined) {
+        // Convertimos el string a booleano
+        active = req.query.active === "true";
+      }
+
       const getAllMembersUseCase = new GetAllMembersUseCase(memberRepository);
       const { members, isEmpty } = await getAllMembersUseCase.execute({
         page,
         limit,
+        active,
       });
 
       if (isEmpty) {
