@@ -30,32 +30,31 @@ export class AuthController {
         throw new UnauthorizedError("Credenciales inválidas");
       }
 
-      const { user, role } = result; // Generar token
-      const token = authService.generateToken(user, role); // Calcular maxAge basado en JWT_EXPIRES_IN
+      const { user, role } = result;
+      const token = authService.generateToken(user, role);
       const expiresIn = process.env.JWT_EXPIRES_IN || "30d";
-      // Convertir la expresión de tiempo (por ejemplo, "30d") a milisegundos
+
       const maxAge = (() => {
         const unit = expiresIn.charAt(expiresIn.length - 1);
         const value = parseInt(expiresIn.slice(0, -1));
 
         switch (unit) {
           case "d":
-            return value * 24 * 60 * 60 * 1000; // días
+            return value * 24 * 60 * 60 * 1000;
           case "h":
-            return value * 60 * 60 * 1000; // horas
+            return value * 60 * 60 * 1000;
           case "m":
-            return value * 60 * 1000; // minutos
+            return value * 60 * 1000;
           case "s":
-            return value * 1000; // segundos
+            return value * 1000;
           default:
-            return 30 * 24 * 60 * 60 * 1000; // por defecto 30 días
+            return 30 * 24 * 60 * 60 * 1000;
         }
       })();
 
-      // Establecer el token como cookie HTTP-only
       res.cookie("authToken", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Solo HTTPS en producción
+        secure: process.env.NODE_ENV === "production",
         maxAge: maxAge,
         sameSite: "strict",
       });
@@ -114,16 +113,21 @@ export class AuthController {
           },
         });
       } else {
-        if (
-          !name ||
-          !email ||
-          !password ||
-          !phone ||
-          !documentId ||
-          !birthDate
-        ) {
+        const requiredFields = {
+          name,
+          email,
+          password,
+          phone,
+          documentId,
+          birthDate,
+        };
+        const missingFields = Object.entries(requiredFields)
+          .filter(([_, value]) => !value)
+          .map(([key]) => key);
+
+        if (missingFields.length > 0) {
           throw new ValidationError(
-            "Todos los campos son requeridos para registrarse como miembro"
+            `Los siguientes campos son requeridos: ${missingFields.join(", ")}`
           );
         }
 
@@ -153,6 +157,21 @@ export class AuthController {
           if (error.message.includes("ya está registrado")) {
             throw new ConflictError(error.message);
           }
+
+          if (error.message.includes("documentId")) {
+            throw new ConflictError(
+              `El documento de identidad ${documentId} ya está registrado en el sistema`
+            );
+          } else if (error.message.includes("email")) {
+            throw new ConflictError(
+              `El email ${email} ya está registrado en el sistema`
+            );
+          } else if (error.message.includes("phone")) {
+            throw new ConflictError(
+              `El teléfono ${phone} ya está registrado en el sistema`
+            );
+          }
+
           throw error;
         }
       }

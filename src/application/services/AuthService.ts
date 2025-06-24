@@ -62,11 +62,23 @@ export class AuthService {
   }
 
   async registerMember(memberData: Member): Promise<Member> {
+ 
     const existingMember = await this.memberRepository.findByEmail(
       memberData.email
     );
     if (existingMember) {
-      throw new ConflictError("El correo electrónico ya está registrado");
+      throw new ConflictError(
+        `El correo electrónico ${memberData.email} ya está registrado`
+      );
+    }
+
+    const existingMemberByDocId = await this.memberRepository.findByDocumentId(
+      memberData.documentId
+    );
+    if (existingMemberByDocId) {
+      throw new ConflictError(
+        `El documento de identidad ${memberData.documentId} ya está registrado`
+      );
     }
 
     if (memberData.password) {
