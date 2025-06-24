@@ -3,15 +3,22 @@ import { IMemberRepository } from "@domain/repositories/IMemberRepository";
 
 export class CreateMemberUseCase {
   constructor(private memberRepository: IMemberRepository) {}
-
   async execute(
     memberData: Omit<Member, "id" | "registrationDate">
   ): Promise<Member> {
-    const existingMember = await this.memberRepository.findByEmail(
+    const existingMemberByEmail = await this.memberRepository.findByEmail(
       memberData.email
     );
-    if (existingMember) {
+    if (existingMemberByEmail) {
       throw new Error("Ya existe un miembro con este correo electrónico");
+    }
+    // Verificar si existe un miembro con el mismo documentId
+    const existingMemberByDocId = await this.memberRepository.findByDocumentId(
+      memberData.documentId
+    );
+
+    if (existingMemberByDocId) {
+      throw new Error("Ya existe un miembro con este número de documento");
     }
 
     const member: Member = {

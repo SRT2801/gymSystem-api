@@ -75,6 +75,23 @@ export class MemberRepository implements IMemberRepository {
     };
   }
 
+  async findByDocumentId(documentId: string): Promise<Member | null> {
+    const member = await MemberModel.findOne({ documentId });
+    if (!member) return null;
+
+    return {
+      id: member._id.toString(),
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      documentId: member.documentId,
+      birthDate: member.birthDate,
+      registrationDate: member.registrationDate,
+      active: member.active,
+      password: member.password,
+    };
+  }
+
   async create(memberData: Member): Promise<Member> {
     const member = await MemberModel.create(memberData);
 

@@ -123,11 +123,22 @@ export class MembersController {
       return res.status(200).json(formattedMember);
     }
   );
-
   update = asyncHandler(
     async (req: Request, res: Response): Promise<Response> => {
       const { id } = req.params;
       const updateData = req.body;
+
+      // Verificar si se está actualizando el documentId y si ya existe
+      if (updateData.documentId) {
+        const existingMember = await memberRepository.findByDocumentId(
+          updateData.documentId
+        );
+        if (existingMember && existingMember.id !== id) {
+          throw new ConflictError(
+            "Ya existe un miembro con este número de documento"
+          );
+        }
+      }
 
       const member = await memberRepository.update(id, updateData);
 
@@ -135,7 +146,16 @@ export class MembersController {
         throw new NotFoundError("Miembro no encontrado");
       }
 
-      return res.status(200).json(member);
+      // Formatear fechas antes de devolver
+      const formattedMember = {
+        ...member,
+        birthDate: member.birthDate ? formatDate(member.birthDate) : undefined,
+        registrationDate: member.registrationDate
+          ? formatDate(member.registrationDate)
+          : undefined,
+      };
+
+      return res.status(200).json(formattedMember);
     }
   );
 
