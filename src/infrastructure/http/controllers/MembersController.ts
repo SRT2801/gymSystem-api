@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import { CreateMemberUseCase } from "@application/useCases/members/CreateMemberUseCase";
 import { GetAllMembersUseCase } from "@application/useCases/members/GetAllMembersUseCase";
 import { MemberRepository } from "@infrastructure/repositories/MemberRepository";
-import { formatDate } from "@infrastructure/common/utils/dateFormatter";
+import {
+  formatDate,
+  formatDateOnly,
+} from "@infrastructure/common/utils/dateFormatter";
 import { asyncHandler } from "../middlewares/errorHandler";
 import {
   ValidationError,
@@ -34,10 +37,9 @@ export class MembersController {
           active: true,
         });
 
-        // Formatear las fechas antes de devolver la respuesta
         const formattedMember = {
           ...member,
-          birthDate: formatDate(member.birthDate),
+          birthDate: formatDateOnly(member.birthDate),
           registrationDate: formatDate(member.registrationDate),
         };
 
@@ -86,7 +88,7 @@ export class MembersController {
 
       const formattedMembers = members.data.map((member) => ({
         ...member,
-        birthDate: formatDate(member.birthDate),
+        birthDate: formatDateOnly(member.birthDate),
         registrationDate: formatDate(member.registrationDate),
       }));
 
@@ -124,7 +126,7 @@ export class MembersController {
 
       const formattedMember = {
         ...member,
-        birthDate: formatDate(member.birthDate),
+        birthDate: formatDateOnly(member.birthDate),
         registrationDate: formatDate(member.registrationDate),
       };
 
@@ -154,10 +156,11 @@ export class MembersController {
         throw new NotFoundError("Miembro no encontrado");
       }
 
-      // Formatear fechas antes de devolver
       const formattedMember = {
         ...member,
-        birthDate: member.birthDate ? formatDate(member.birthDate) : undefined,
+        birthDate: member.birthDate
+          ? formatDateOnly(member.birthDate)
+          : undefined,
         registrationDate: member.registrationDate
           ? formatDate(member.registrationDate)
           : undefined,
