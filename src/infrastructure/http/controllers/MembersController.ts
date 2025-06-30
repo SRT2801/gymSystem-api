@@ -57,18 +57,43 @@ export class MembersController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      // Manejar filtrado por estado (activo/inactivo)
+      // Manejar filtrados
       let active: boolean | undefined = undefined;
       if (req.query.active !== undefined) {
-        // Convertimos el string a booleano
         active = req.query.active === "true";
       }
+
+      let hasAccount: boolean | undefined = undefined;
+      if (req.query.hasAccount !== undefined) {
+        hasAccount = req.query.hasAccount === "true";
+      }
+
+      // Obtener los parámetros de búsqueda y ordenamiento
+      const name = req.query.name as string | undefined;
+      const email = req.query.email as string | undefined;
+      const documentId = req.query.documentId as string | undefined;
+      const registrationDateFrom = req.query.registrationDateFrom as
+        | string
+        | undefined;
+      const registrationDateTo = req.query.registrationDateTo as
+        | string
+        | undefined;
+      const sortBy = req.query.sortBy as string | undefined;
+      const sortOrder = req.query.sortOrder as "asc" | "desc" | undefined;
 
       const getAllMembersUseCase = new GetAllMembersUseCase(memberRepository);
       const { members, isEmpty } = await getAllMembersUseCase.execute({
         page,
         limit,
         active,
+        name,
+        email,
+        documentId,
+        hasAccount,
+        registrationDateFrom,
+        registrationDateTo,
+        sortBy,
+        sortOrder,
       });
 
       if (isEmpty) {
