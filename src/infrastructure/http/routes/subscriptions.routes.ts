@@ -1,11 +1,19 @@
 import { Router } from "express";
 import { SubscriptionsController } from "../controllers/SubscriptionsController";
 import { authenticate, authorize } from "../middlewares/authMiddleware";
+import { subscriptionFiltersDocumentation } from "@infrastructure/common/utils/filterDocumentation";
 
 const subscriptionsRouter = Router();
 const subscriptionsController = new SubscriptionsController();
 
 subscriptionsRouter.use(authenticate);
+
+subscriptionsRouter.get("/filters", (req, res) => {
+  res.status(200).json({
+    message: "Filtros disponibles para el endpoint /subscriptions",
+    filters: subscriptionFiltersDocumentation,
+  });
+});
 
 subscriptionsRouter.get(
   "/",
