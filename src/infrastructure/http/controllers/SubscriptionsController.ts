@@ -62,11 +62,49 @@ export class SubscriptionsController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
+      // Manejar filtrados
+      let active: boolean | undefined = undefined;
+      if (req.query.active !== undefined) {
+        active = req.query.active === "true";
+      }
+
+      // Obtener los parámetros de búsqueda y ordenamiento
+      const memberId = req.query.memberId as string | undefined;
+      const membershipId = req.query.membershipId as string | undefined;
+      const paymentStatus = req.query.paymentStatus as string | undefined;
+      const startDateFrom = req.query.startDateFrom as string | undefined;
+      const startDateTo = req.query.startDateTo as string | undefined;
+      const endDateFrom = req.query.endDateFrom as string | undefined;
+      const endDateTo = req.query.endDateTo as string | undefined;
+      const sortBy = req.query.sortBy as string | undefined;
+      const sortOrder = req.query.sortOrder as "asc" | "desc" | undefined;
+
+      // Restricciones para usuarios con rol de miembro
+      if (req.user?.role === "member") {
+        // Si es un miembro, solo puede ver sus propias suscripciones
+        // Forzar el memberId al ID del usuario autenticado
+        const memberId = req.user.id;
+      }
+
       const getAllSubscriptionsUseCase = new GetAllSubscriptionsUseCase(
         subscriptionRepository
       );
+
       const { subscriptions, isEmpty } =
-        await getAllSubscriptionsUseCase.execute({ page, limit });
+        await getAllSubscriptionsUseCase.execute({
+          page,
+          limit,
+          active,
+          memberId,
+          membershipId,
+          paymentStatus,
+          startDateFrom,
+          startDateTo,
+          endDateFrom,
+          endDateTo,
+          sortBy,
+          sortOrder,
+        });
 
       if (isEmpty) {
         return res.status(200).json({
