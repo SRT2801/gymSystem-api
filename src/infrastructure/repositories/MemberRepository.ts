@@ -14,14 +14,63 @@ export class MemberRepository implements IMemberRepository {
     const limit = options?.limit || 10;
     const skip = (page - 1) * limit;
 
-    // Construir filtro basado en las opciones
     const filter: any = {};
-    if (options?.filter?.active !== undefined) {
-      filter.active = options.filter.active;
+
+    if (options?.filter) {
+      if (options.filter.active !== undefined) {
+        filter.active = options.filter.active;
+      }
+
+      if (options.filter.name) {
+        filter.name = { $regex: options.filter.name, $options: "i" };
+      }
+
+      if (options.filter.email) {
+        filter.email = { $regex: options.filter.email, $options: "i" };
+      }
+
+      if (options.filter.documentId) {
+        filter.documentId = {
+          $regex: options.filter.documentId,
+          $options: "i",
+        };
+      }
+
+      if (options.filter.hasAccount !== undefined) {
+        filter.hasAccount = options.filter.hasAccount;
+      }
+
+      if (
+        options.filter.registrationDateFrom ||
+        options.filter.registrationDateTo
+      ) {
+        filter.registrationDate = {};
+
+        if (options.filter.registrationDateFrom) {
+          filter.registrationDate.$gte = options.filter.registrationDateFrom;
+        }
+
+        if (options.filter.registrationDateTo) {
+          filter.registrationDate.$lte = options.filter.registrationDateTo;
+        }
+      }
+    }
+
+    let sortOptions = {};
+    if (options?.sortBy) {
+      sortOptions = {
+        [options.sortBy]: options.sortOrder === "desc" ? -1 : 1,
+      };
+    } else {
+      sortOptions = { registrationDate: -1 };
     }
 
     const [members, total] = await Promise.all([
-      MemberModel.find(filter).select("-password").skip(skip).limit(limit),
+      MemberModel.find(filter)
+        .select("-password")
+        .skip(skip)
+        .limit(limit)
+        .sort(sortOptions),
       MemberModel.countDocuments(filter),
     ]);
 
