@@ -1,24 +1,86 @@
 import { MembershipSubscription } from "@domain/entities/MembershipSubscription";
-import { IMembershipSubscriptionRepository } from "@domain/repositories/IMembershipSubscriptionRepository";
 import {
-  PaginationOptions,
-  PaginationResult,
-} from "@domain/repositories/IMemberRepository";
+  IMembershipSubscriptionRepository,
+  SubscriptionFilter,
+  SubscriptionPaginationOptions,
+} from "@domain/repositories/IMembershipSubscriptionRepository";
+import { PaginationResult } from "@domain/repositories/IMemberRepository";
 import { MembershipSubscriptionModel } from "@infrastructure/persistence/database/mongodb/models/MembershipSubscriptionModel";
 
 export class MembershipSubscriptionRepository
   implements IMembershipSubscriptionRepository
 {
   async findAll(
-    options?: PaginationOptions
+    options?: SubscriptionPaginationOptions
   ): Promise<PaginationResult<MembershipSubscription>> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
     const skip = (page - 1) * limit;
 
+
+    const filter: any = {};
+
+    if (options?.filter) {
+      if (options.filter.active !== undefined) {
+        filter.active = options.filter.active;
+      }
+
+      if (options.filter.memberId) {
+        filter.memberId = options.filter.memberId;
+      }
+
+      if (options.filter.membershipId) {
+        filter.membershipId = options.filter.membershipId;
+      }
+
+      if (options.filter.paymentStatus) {
+        filter.paymentStatus = options.filter.paymentStatus;
+      }
+
+
+      if (options.filter.startDateFrom || options.filter.startDateTo) {
+        filter.startDate = {};
+
+        if (options.filter.startDateFrom) {
+          filter.startDate.$gte = options.filter.startDateFrom;
+        }
+
+        if (options.filter.startDateTo) {
+          filter.startDate.$lte = options.filter.startDateTo;
+        }
+      }
+
+
+      if (options.filter.endDateFrom || options.filter.endDateTo) {
+        filter.endDate = {};
+
+        if (options.filter.endDateFrom) {
+          filter.endDate.$gte = options.filter.endDateFrom;
+        }
+
+        if (options.filter.endDateTo) {
+          filter.endDate.$lte = options.filter.endDateTo;
+        }
+      }
+    }
+
+  
+    let sortOptions = {};
+    if (options?.sortBy) {
+      sortOptions = {
+        [options.sortBy]: options.sortOrder === "desc" ? -1 : 1,
+      };
+    } else {
+
+      sortOptions = { startDate: -1 };
+    }
+
     const [subscriptions, total] = await Promise.all([
-      MembershipSubscriptionModel.find().skip(skip).limit(limit),
-      MembershipSubscriptionModel.countDocuments(),
+      MembershipSubscriptionModel.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort(sortOptions),
+      MembershipSubscriptionModel.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(total / limit);
