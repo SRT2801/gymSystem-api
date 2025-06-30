@@ -2,12 +2,20 @@ import { Member } from "../entities/Member";
 
 export interface MemberFilter {
   active?: boolean;
+  name?: string;
+  email?: string;
+  documentId?: string;
+  hasAccount?: boolean;
+  registrationDateFrom?: Date;
+  registrationDateTo?: Date;
 }
 
 export interface PaginationOptions {
   page?: number;
   limit?: number;
   filter?: MemberFilter;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export interface PaginationResult<T> {
