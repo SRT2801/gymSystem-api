@@ -1,9 +1,24 @@
 import { MembershipSubscription } from "../entities/MembershipSubscription";
 import { PaginationOptions, PaginationResult } from "./IMemberRepository";
 
+export interface SubscriptionFilter {
+  memberId?: string;
+  membershipId?: string;
+  active?: boolean;
+  paymentStatus?: string;
+  startDateFrom?: Date;
+  startDateTo?: Date;
+  endDateFrom?: Date;
+  endDateTo?: Date;
+}
+
+export interface SubscriptionPaginationOptions extends PaginationOptions {
+  filter?: SubscriptionFilter;
+}
+
 export interface IMembershipSubscriptionRepository {
   findAll(
-    options?: PaginationOptions
+    options?: SubscriptionPaginationOptions
   ): Promise<PaginationResult<MembershipSubscription>>;
   findById(id: string): Promise<MembershipSubscription | null>;
   findByMemberId(memberId: string): Promise<MembershipSubscription[]>;
