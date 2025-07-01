@@ -12,25 +12,23 @@ const adminRepository = new AdminRepository();
 const memberRepository = new MemberRepository();
 const authService = new AuthService(adminRepository, memberRepository);
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        name: string;
-        email: string;
-        role: string;
-      };
-    }
+type AppUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: AppUser;
   }
 }
 
 export const authenticate = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    // Intentar obtener token de cookies primero
     let token = req.cookies.authToken;
 
-    // Si no hay token en cookies, verificar el header de autorización
     if (!token) {
       const authHeader = req.headers.authorization;
 
@@ -75,10 +73,8 @@ export const authorize = (...allowedRoles: string[]) => {
 export const optionalAuth = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Intentar obtener token de cookies primero
       let token = req.cookies.authToken;
 
-      // Si no hay token en cookies, verificar el header de autorización
       if (!token) {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
