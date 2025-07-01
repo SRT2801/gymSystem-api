@@ -21,7 +21,7 @@ export class AuthService {
   ): Promise<{ user: Admin | Member; role: string } | null> {
     const admin = await this.adminRepository.findByEmail(email);
 
-    if (admin && admin.active) {
+    if (admin && admin.active && admin.password) {
       const isPasswordValid = await bcrypt.compare(password, admin.password);
 
       if (isPasswordValid) {
@@ -50,19 +50,22 @@ export class AuthService {
       throw new ConflictError("El correo electrónico ya está registrado");
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(adminData.password, salt);
+    let hashedPassword = undefined;
+    if (adminData.password) {
+      const salt = await bcrypt.genSalt(10);
+      hashedPassword = await bcrypt.hash(adminData.password, salt);
+    }
 
     const newAdmin = await this.adminRepository.create({
       ...adminData,
       password: hashedPassword,
+      authProvider: adminData.authProvider || "local",
     });
 
     return newAdmin;
   }
 
   async registerMember(memberData: Member): Promise<Member> {
- 
     const existingMember = await this.memberRepository.findByEmail(
       memberData.email
     );
@@ -72,13 +75,14 @@ export class AuthService {
       );
     }
 
-    const existingMemberByDocId = await this.memberRepository.findByDocumentId(
-      memberData.documentId
-    );
-    if (existingMemberByDocId) {
-      throw new ConflictError(
-        `El documento de identidad ${memberData.documentId} ya está registrado`
-      );
+    if (memberData.documentId) {
+      const existingMemberByDocId =
+        await this.memberRepository.findByDocumentId(memberData.documentId);
+      if (existingMemberByDocId) {
+        throw new ConflictError(
+          `El documento de identidad ${memberData.documentId} ya está registrado`
+        );
+      }
     }
 
     if (memberData.password) {
@@ -92,12 +96,19 @@ export class AuthService {
   generateToken(user: Admin | Member, role: string): string {
     const secret = process.env.JWT_SECRET || "your_jwt_secret";
 
+    if (!user) {
+      throw new Error(
+        "No se puede generar un token para un usuario indefinido"
+      );
+    }
+
     const tokenPayload = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: role,
     };
+
     const token = jwt.sign(tokenPayload, secret, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     } as jwt.SignOptions);
@@ -113,6 +124,80 @@ export class AuthService {
       return decoded;
     } catch (error) {
       throw new UnauthorizedError("Token inválido o expirado");
+    }
+  }
+
+  async findOrCreateGoogleUser(
+    googleUserData: {
+      googleId: string;
+      email: string;
+      name: string;
+      profilePicture?: string;
+    },
+    role: "admin" | "staff" | "member" = "member"
+  ): Promise<{ user: Admin | Member; role: string; isNewUser: boolean }> {
+    let user: Admin | Member | null = null;
+    let isNewUser = false;
+
+    if (role === "admin" || role === "staff") {
+      user = await this.adminRepository.findByGoogleId(googleUserData.googleId);
+
+      if (!user) {
+        user = await this.adminRepository.findByEmail(googleUserData.email);
+
+        if (user) {
+          user = await this.adminRepository.update(user.id!, {
+            googleId: googleUserData.googleId,
+            authProvider: "google",
+            profilePicture: googleUserData.profilePicture,
+          });
+        } else {
+          user = await this.adminRepository.create({
+            name: googleUserData.name,
+            email: googleUserData.email,
+            googleId: googleUserData.googleId,
+            authProvider: "google",
+            profilePicture: googleUserData.profilePicture,
+            role: role,
+            active: true,
+          } as Admin);
+          isNewUser = true;
+        }
+      }
+
+      return { user: user!, role: user!.role, isNewUser };
+    } else {
+      user = await this.memberRepository.findByGoogleId(
+        googleUserData.googleId
+      );
+
+      if (!user) {
+        user = await this.memberRepository.findByEmail(googleUserData.email);
+
+        if (user) {
+          user = await this.memberRepository.update(user.id!, {
+            googleId: googleUserData.googleId,
+            authProvider: "google",
+            profilePicture: googleUserData.profilePicture,
+            hasAccount: true,
+          });
+        } else {
+          user = await this.memberRepository.create({
+            name: googleUserData.name,
+            email: googleUserData.email,
+            googleId: googleUserData.googleId,
+            authProvider: "google",
+            profilePicture: googleUserData.profilePicture,
+            active: true,
+            hasAccount: true,
+            registrationDate: new Date(),
+            completeProfile: false,
+          } as Member);
+          isNewUser = true;
+        }
+      }
+
+      return { user: user!, role: "member", isNewUser };
     }
   }
 }
