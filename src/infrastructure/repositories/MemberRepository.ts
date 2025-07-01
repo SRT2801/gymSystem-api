@@ -147,6 +147,27 @@ export class MemberRepository implements IMemberRepository {
     };
   }
 
+  async findByGoogleId(googleId: string): Promise<Member | null> {
+    const member = await MemberModel.findOne({ googleId });
+    if (!member) return null;
+
+    return {
+      id: member._id.toString(),
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      documentId: member.documentId,
+      birthDate: member.birthDate,
+      registrationDate: member.registrationDate,
+      active: member.active,
+      password: member.password,
+      hasAccount: member.hasAccount,
+      googleId: member.googleId,
+      authProvider: member.authProvider,
+      profilePicture: member.profilePicture,
+    };
+  }
+
   async create(memberData: Member): Promise<Member> {
     const member = await MemberModel.create(memberData);
 
