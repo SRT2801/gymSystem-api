@@ -5,24 +5,47 @@ import {
   authorize,
   optionalAuth,
 } from "../middlewares/authMiddleware";
+import passport from "passport";
 
 export const authRouter = Router();
 const authController = new AuthController();
 
-// Rutas públicas
 authRouter.post("/login", authController.login);
 authRouter.post("/logout", authController.logout);
 
-// Ruta única para registro que usa autenticación opcional
 authRouter.post("/register", optionalAuth, authController.register);
 
-// Ruta protegida
 authRouter.get("/me", authenticate, authController.me);
 
-// Ruta específica para administradores (requiere autenticación como admin)
+authRouter.post(
+  "/complete-profile",
+  authenticate,
+  authController.completeProfile
+);
+
 authRouter.post(
   "/register-admin",
   authenticate,
   authorize("admin"),
   authController.registerAdmin
+);
+
+authRouter.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+    prompt: "select_account",
+    accessType: "online",
+  }),
+  authController.googleLogin
+);
+
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login",
+    session: false,
+  }),
+  authController.googleCallback
 );
