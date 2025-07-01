@@ -138,6 +138,8 @@ export class AuthController {
             password,
             phone,
             documentId,
+            authProvider: "local",
+            completeProfile: true,
             birthDate: new Date(birthDate),
             registrationDate: new Date(),
             active: true,
@@ -249,6 +251,140 @@ export class AuthController {
       return res.status(200).json({
         message: "Sesión cerrada exitosamente",
       });
+    }
+  );
+
+  googleLogin = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {}
+  );
+
+  googleCallback = asyncHandler(
+    async (req: Request, res: Response): Promise<Response | void> => {
+      if (!req.user) {
+        console.error("No se encontró req.user en el callback de Google");
+        throw new UnauthorizedError("Autenticación con Google fallida");
+      }
+
+      const userObj = req.user as any;
+
+      if (!userObj.user || !userObj.role) {
+        console.error("Estructura de req.user incorrecta:", userObj);
+        throw new UnauthorizedError("Estructura de autenticación inválida");
+      }
+
+      const { user, role } = userObj;
+
+      if (!user || !user.id) {
+        console.error("Usuario sin ID válido:", user);
+        throw new UnauthorizedError("Usuario de Google inválido");
+      }
+
+      const token = authService.generateToken(user, role);
+      const expiresIn = process.env.JWT_EXPIRES_IN || "30d";
+
+      const maxAge = (() => {
+        const unit = expiresIn.charAt(expiresIn.length - 1);
+        const value = parseInt(expiresIn.slice(0, -1));
+
+        switch (unit) {
+          case "d":
+            return value * 24 * 60 * 60 * 1000;
+          case "h":
+            return value * 60 * 60 * 1000;
+          case "m":
+            return value * 60 * 1000;
+          case "s":
+            return value * 1000;
+          default:
+            return 30 * 24 * 60 * 60 * 1000;
+        }
+      })();
+
+      res.cookie("authToken", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: maxAge,
+        sameSite: "strict",
+      });
+
+      const redirectUrl = process.env.FRONTEND_URL || "/";
+      const user_info = req.user as any;
+
+      const needsProfileCompletion =
+        user_info.user.authProvider === "google" &&
+        (!user_info.user.phone || !user_info.user.documentId);
+
+      const profileParam = needsProfileCompletion
+        ? "&completeProfile=true"
+        : "";
+
+      const userId = user_info.user.id || "";
+
+      res.redirect(
+        `${redirectUrl}?auth=success${profileParam}&userId=${userId}`
+      );
+    }
+  );
+
+  completeProfile = asyncHandler(
+    async (req: Request, res: Response): Promise<Response> => {
+      if (!req.user?.id) {
+        throw new UnauthorizedError("No autenticado");
+      }
+
+      if (req.user.role !== "member") {
+        throw new ForbiddenError(
+          "Solo los miembros pueden completar su perfil"
+        );
+      }
+
+      const { phone, documentId, birthDate } = req.body;
+
+      if (!phone || !documentId || !birthDate) {
+        throw new ValidationError(
+          "Teléfono, documento de identidad y fecha de nacimiento son requeridos"
+        );
+      }
+
+      try {
+        const existingMemberByDocId = await memberRepository.findByDocumentId(
+          documentId
+        );
+        if (existingMemberByDocId && existingMemberByDocId.id !== req.user.id) {
+          throw new ConflictError(
+            `El documento de identidad ${documentId} ya está registrado en el sistema`
+          );
+        }
+
+        const updatedMember = await memberRepository.update(req.user.id, {
+          phone,
+          documentId,
+          birthDate: new Date(birthDate),
+          completeProfile: true,
+        });
+
+        if (!updatedMember) {
+          throw new NotFoundError("Miembro no encontrado");
+        }
+
+        return res.status(200).json({
+          message: "Perfil completado exitosamente",
+          user: {
+            id: updatedMember.id,
+            name: updatedMember.name,
+            email: updatedMember.email,
+            role: "member",
+            completeProfile: true,
+          },
+        });
+      } catch (error: any) {
+        if (error.message.includes("documentId")) {
+          throw new ConflictError(
+            `El documento de identidad ${documentId} ya está registrado en el sistema`
+          );
+        }
+        throw error;
+      }
     }
   );
 }
