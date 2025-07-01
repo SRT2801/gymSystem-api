@@ -33,6 +33,7 @@ export interface IMemberRepository {
   findById(id: string): Promise<Member | null>;
   findByEmail(email: string): Promise<Member | null>;
   findByDocumentId(documentId: string): Promise<Member | null>;
+  findByGoogleId(googleId: string): Promise<Member | null>;
   create(member: Member): Promise<Member>;
   update(id: string, member: Partial<Member>): Promise<Member | null>;
   delete(id: string): Promise<boolean>;
