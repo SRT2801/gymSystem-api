@@ -11,7 +11,7 @@ export class AdminRepository implements IAdminRepository {
       email: admin.email,
       role: admin.role,
       active: admin.active,
-      password: "", 
+      password: "",
     }));
   }
 
@@ -25,7 +25,7 @@ export class AdminRepository implements IAdminRepository {
       email: admin.email,
       role: admin.role,
       active: admin.active,
-      password: "", 
+      password: "",
     };
   }
 
@@ -52,7 +52,7 @@ export class AdminRepository implements IAdminRepository {
       email: admin.email,
       role: admin.role,
       active: admin.active,
-      password: "", 
+      password: "",
     };
   }
 
@@ -69,12 +69,29 @@ export class AdminRepository implements IAdminRepository {
       email: admin.email,
       role: admin.role,
       active: admin.active,
-      password: "", 
+      password: "",
     };
   }
 
   async delete(id: string): Promise<boolean> {
     const result = await AdminModel.findByIdAndDelete(id);
     return !!result;
+  }
+
+  async findByGoogleId(googleId: string): Promise<Admin | null> {
+    const admin = await AdminModel.findOne({ googleId });
+    if (!admin) return null;
+
+    return {
+      id: admin._id.toString(),
+      name: admin.name,
+      email: admin.email,
+      password: admin.password || "",
+      role: admin.role,
+      active: admin.active,
+      googleId: admin.googleId,
+      authProvider: admin.authProvider,
+      profilePicture: admin.profilePicture,
+    };
   }
 }
