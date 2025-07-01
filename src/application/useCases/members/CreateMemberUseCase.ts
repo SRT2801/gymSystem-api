@@ -12,7 +12,10 @@ export class CreateMemberUseCase {
     if (existingMemberByEmail) {
       throw new Error("Ya existe un miembro con este correo electrónico");
     }
-    // Verificar si existe un miembro con el mismo documentId
+   
+    if (!memberData.documentId) {
+      throw new Error("El número de documento es requerido");
+    }
     const existingMemberByDocId = await this.memberRepository.findByDocumentId(
       memberData.documentId
     );
